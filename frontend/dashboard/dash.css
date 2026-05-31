@@ -2503,13 +2503,29 @@ body,
   gap: 20px;
 }
 
-.scanner-frame {
+.qr-video-wrap {
   width: 250px;
   height: 250px;
   position: relative;
-  background: rgba(0, 0, 0, 0.3);
   border-radius: 12px;
   overflow: hidden;
+  background: rgba(15, 23, 42, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+#qrVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.scanner-frame {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  pointer-events: none;
 }
 
 .corner {
@@ -2547,6 +2563,134 @@ body,
   color: #94a3b8;
   font-size: 0.9rem;
   text-align: center;
+}
+
+.qr-manual {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.qr-manual input {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.qr-manual input:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.6);
+  border-color: transparent;
+}
+
+.qr-manual button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #38bdf8, #22c55e);
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Scroll Modern Railway Features */
+.scroll-sections {
+  background: radial-gradient(circle at top, rgba(148, 163, 184, 0.08), rgba(15, 23, 42, 0.9));
+  padding: 120px 80px;
+}
+
+.scroll-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+.scroll-section {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 36px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(59, 130, 246, 0.14), rgba(16, 185, 129, 0.1), rgba(244, 63, 94, 0.12));
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.scroll-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.scroll-header h2 {
+  font-family: "Tilt Neon", sans-serif;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  color: #f8fafc;
+  margin-bottom: 8px;
+}
+
+.scroll-header p {
+  color: rgba(226, 232, 240, 0.8);
+  margin-bottom: 20px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.feature-card {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 16px;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+  display: grid;
+  gap: 10px;
+}
+
+.feature-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #bfdbfe;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.feature-kpi {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Responsive adjustments */

@@ -222,14 +222,22 @@ alt="" />
                     <button class="close-modal" id="closeQrModal">&times;</button>
                 </div>
                 <div class="qr-scanner-ui">
-                    <div class="scanner-frame">
-                        <div class="laser"></div>
-                        <div class="corner top-left"></div>
-                        <div class="corner top-right"></div>
-                        <div class="corner bottom-left"></div>
-                        <div class="corner bottom-right"></div>
+                    <div class="qr-video-wrap" aria-hidden="true">
+                        <video id="qrVideo" playsinline muted></video>
+                        <canvas id="qrCanvas" hidden></canvas>
+                        <div class="scanner-frame">
+                            <div class="laser"></div>
+                            <div class="corner top-left"></div>
+                            <div class="corner top-right"></div>
+                            <div class="corner bottom-left"></div>
+                            <div class="corner bottom-right"></div>
+                        </div>
                     </div>
-                    <p>Align QR Code within the frame to identify railway component</p>
+                    <p id="qrStatus">Align QR Code within the frame to identify railway component</p>
+                    <div class="qr-manual">
+                        <input id="manualQrInput" type="text" placeholder="Enter Asset ID (e.g., RC-2024-001)">
+                        <button id="manualQrBtn" type="button">Submit</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -239,6 +247,131 @@ alt="" />
             <!-- Asset Cards will be dynamically injected here -->
         </div>
 
+    </div>
+</section>
+
+<!-- Scroll Modern Railway Features -->
+<section class="scroll-sections" id="railway-insights">
+    <div class="scroll-wrap">
+        <div class="scroll-section reveal">
+            <div class="scroll-header">
+                <h2>Signal Health Grid</h2>
+                <p>Real-time interlocking status and signal uptime.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-tag">Zone A</span>
+                    <div class="feature-kpi">99.2%</div>
+                    <p>Signal uptime (24h)</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Zone C</span>
+                    <div class="feature-kpi">3</div>
+                    <p>Active signal anomalies</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Central</span>
+                    <div class="feature-kpi">12s</div>
+                    <p>Average route lock time</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-section reveal">
+            <div class="scroll-header">
+                <h2>Rolling Stock Pulse</h2>
+                <p>Coach health, brake wear, and traction alerts.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-tag">Fleet</span>
+                    <div class="feature-kpi">142</div>
+                    <p>Active rakes in service</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Brake</span>
+                    <div class="feature-kpi">8</div>
+                    <p>Brake inspections due</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Traction</span>
+                    <div class="feature-kpi">2.4%</div>
+                    <p>Traction imbalance</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-section reveal">
+            <div class="scroll-header">
+                <h2>Station Footfall Flow</h2>
+                <p>Platform crowd density and boarding health.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-tag">Peak</span>
+                    <div class="feature-kpi">78%</div>
+                    <p>Average platform occupancy</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Gate</span>
+                    <div class="feature-kpi">4m</div>
+                    <p>Entry queue time</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Safety</span>
+                    <div class="feature-kpi">0</div>
+                    <p>Overcrowding alerts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-section reveal">
+            <div class="scroll-header">
+                <h2>Weather Impact Map</h2>
+                <p>Rain, heat, and flood risk for track assets.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-tag">Monsoon</span>
+                    <div class="feature-kpi">6</div>
+                    <p>High-risk flood segments</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Heat</span>
+                    <div class="feature-kpi">44°C</div>
+                    <p>Rail expansion watch</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Wind</span>
+                    <div class="feature-kpi">18km/h</div>
+                    <p>Crosswind advisory</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-section reveal">
+            <div class="scroll-header">
+                <h2>Depot Parts Velocity</h2>
+                <p>Spare part consumption and replenishment speed.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-tag">Fast</span>
+                    <div class="feature-kpi">12h</div>
+                    <p>Avg. reorder turnaround</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Critical</span>
+                    <div class="feature-kpi">6</div>
+                    <p>Parts below threshold</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-tag">Inventory</span>
+                    <div class="feature-kpi">94%</div>
+                    <p>Fill-rate last week</p>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -253,6 +386,7 @@ alt="" />
 </footer>
 
 <!-- Page Logic -->
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="common.js" defer></script>
 <script src="dash.js" defer></script>
 

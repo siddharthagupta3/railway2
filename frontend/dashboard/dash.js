@@ -44,6 +44,7 @@ const app = {
 function initDashboard() {
     setupNavigation();
     setupProfileOverview();
+    setupScrollReveals();
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
@@ -1059,44 +1060,154 @@ function setupRailwaySearch() {
 }
 
 function setupQRModal() {
-    const openBtns = [
-        document.getElementById('mainScanBtn')
-    ];
+    const openBtns = [document.getElementById('mainScanBtn')];
     const modal = document.getElementById('qrModal');
     const closeBtn = document.getElementById('closeQrModal');
-    if (!modal) return;
+    const video = document.getElementById('qrVideo');
+    const canvas = document.getElementById('qrCanvas');
+    const statusEl = document.getElementById('qrStatus');
+    const manualInput = document.getElementById('manualQrInput');
+    const manualBtn = document.getElementById('manualQrBtn');
+    if (!modal || !video || !canvas) return;
+
+    let stream = null;
+    let rafId = 0;
+    let scanning = false;
+
+    function setStatus(message) {
+        if (statusEl) statusEl.textContent = message;
+    }
+
+    function stopScanner() {
+        scanning = false;
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = 0;
+        }
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+        }
+        video.srcObject = null;
+    }
+
+    function highlightAsset(asset) {
+        const card = document.getElementById(`asset-${asset.id.replace(/[^a-z0-9]/gi, '-')}`);
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.style.outline = '2px solid #4ade80';
+            card.style.boxShadow = '0 0 20px rgba(74,222,128,0.3)';
+            setTimeout(() => {
+                card.style.outline = '';
+                card.style.boxShadow = '';
+            }, 3000);
+        }
+    }
+
+    function handleScanResult(rawValue) {
+        const normalized = String(rawValue || '').trim();
+        if (!normalized) return;
+
+        const asset = RAILWAY_ASSETS.find((item) =>
+            item.id.toLowerCase() === normalized.toLowerCase()
+            || normalized.toLowerCase().includes(item.id.toLowerCase())
+        );
+
+        if (asset) {
+            showRailwayNotification(`✅ QR Scanned: ${asset.name} (${asset.id})`, 'success');
+            highlightAsset(asset);
+        } else {
+            showRailwayNotification('⚠️ QR scanned but asset not found.', 'error');
+        }
+    }
+
+    function handleManualLookup() {
+        const value = manualInput ? manualInput.value.trim() : '';
+        if (!value) {
+            setStatus('Enter an Asset ID before submitting.');
+            return;
+        }
+        handleScanResult(value);
+        if (manualInput) manualInput.value = '';
+        closeModal();
+    }
+
+    function scanFrame() {
+        if (!scanning) return;
+
+        const width = video.videoWidth;
+        const height = video.videoHeight;
+        if (!width || !height) {
+            rafId = requestAnimationFrame(scanFrame);
+            return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(video, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+
+        if (typeof window.jsQR === 'function') {
+            const code = window.jsQR(imageData.data, imageData.width, imageData.height);
+            if (code && code.data) {
+                setStatus('QR detected. Processing...');
+                scanning = false;
+                stopScanner();
+                modal.hidden = true;
+                handleScanResult(code.data);
+                return;
+            }
+        }
+
+        rafId = requestAnimationFrame(scanFrame);
+    }
+
+    async function startScanner() {
+        try {
+            if (typeof window.jsQR !== 'function') {
+                setStatus('QR engine not loaded. Use manual Asset ID input.');
+                return;
+            }
+            setStatus('Starting camera...');
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+            video.srcObject = stream;
+            await video.play();
+            scanning = true;
+            setStatus('Align QR Code within the frame to identify railway component');
+            rafId = requestAnimationFrame(scanFrame);
+        } catch (err) {
+            setStatus('Camera access denied or unavailable.');
+            showRailwayNotification('Camera access denied or unavailable.', 'error');
+        }
+    }
 
     function openModal() {
         modal.hidden = false;
         modal.style.animation = 'none';
-        // Simulate random asset scan after 2.5s
-        setTimeout(() => {
-            if (!modal.hidden) {
-                modal.hidden = true;
-                const randomAsset = RAILWAY_ASSETS[Math.floor(Math.random() * RAILWAY_ASSETS.length)];
-                showRailwayNotification(`✅ QR Scanned: ${randomAsset.name} (${randomAsset.id})`, 'success');
-                // Highlight matched card
-                const card = document.getElementById(`asset-${randomAsset.id.replace(/[^a-z0-9]/gi, '-')}`);
-                if (card) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    card.style.outline = '2px solid #4ade80';
-                    card.style.boxShadow = '0 0 20px rgba(74,222,128,0.3)';
-                    setTimeout(() => {
-                        card.style.outline = '';
-                        card.style.boxShadow = '';
-                    }, 3000);
-                }
-            }
-        }, 2500);
+        stopScanner();
+        startScanner();
     }
 
-    openBtns.forEach(btn => {
+    function closeModal() {
+        modal.hidden = true;
+        stopScanner();
+    }
+
+    openBtns.forEach((btn) => {
         if (btn) btn.addEventListener('click', openModal);
     });
 
-    if (closeBtn) closeBtn.addEventListener('click', () => { modal.hidden = true; });
-    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.hidden = true; });
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    if (manualBtn) manualBtn.addEventListener('click', handleManualLookup);
+    if (manualInput) {
+        manualInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleManualLookup();
+        });
+    }
 }
 
 function setupHeroScanBtn() {
@@ -1141,4 +1252,25 @@ function showRailwayNotification(msg, type = 'info') {
         notification.style.transform = 'translateX(20px)';
         setTimeout(() => notification.remove(), 350);
     }, 3500);
+}
+
+function setupScrollReveals() {
+    const revealItems = Array.from(document.querySelectorAll('.reveal'));
+    if (revealItems.length === 0) return;
+
+    if (!('IntersectionObserver' in window)) {
+        revealItems.forEach((item) => item.classList.add('is-visible'));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+
+    revealItems.forEach((item) => observer.observe(item));
 }
