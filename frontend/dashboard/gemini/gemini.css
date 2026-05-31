@@ -56,6 +56,24 @@ html, body {
   gap: 10px;
 }
 
+.header-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.header-center .title {
+  font-size: 13px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
 .logo {
   font-size: 18px;
   font-weight: 700;
@@ -521,12 +539,12 @@ html, body {
 /* ================= INPUT ================= */
 .chat-input {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
   left: 280px;
   right: 20px;
   background: rgba(8, 12, 24, 0.9);
   border-radius: 18px;
-  padding: 14px 16px;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
   backdrop-filter: blur(20px);
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   display: flex;
@@ -693,13 +711,30 @@ html, body {
   .chat-input {
     width: auto;
     border-radius: 16px;
-    bottom: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
     left: 12px;
     right: 12px;
     transform: none;
-    padding: 12px;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
     max-width: none;
     gap: 8px;
+  }
+
+  .input-row {
+    flex-wrap: wrap;
+  }
+
+  .chat-input input {
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .attach,
+  .mic,
+  .send-btn {
+    flex: 1 1 30%;
+    order: 2;
+    justify-content: center;
   }
   
   .chat-input input {
@@ -722,6 +757,10 @@ html, body {
     height: 50px;
     padding: 0 10px;
   }
+
+  .header-center {
+    display: none;
+  }
   
   .logo {
     font-size: 16px;
@@ -729,6 +768,10 @@ html, body {
   
   .icon-btn {
     padding: 6px;
+  }
+
+  .chat-item-delete-btn {
+    opacity: 1;
   }
 }
 
