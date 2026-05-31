@@ -1,27 +1,17 @@
 /**
- * signup.js — Login + Register with real backend API
- * Connects to: http://localhost:5000/api/auth
+ * signup.js — Login + Register (frontend-only mode)
  */
 'use strict';
 
 /* ─── Config ─────────────────────────────────────────────────── */
-const API_BASE      = 'http://localhost:5000/api';
 const REDIRECT_DELAY = 1500;
 const byId = (id) => document.getElementById(id);
 
 /* ─── Redirect if already logged in ─────────────────────────── */
 (function checkAlreadyLoggedIn() {
-  const token = localStorage.getItem('authToken');
-  if (!token) return;
-
-  // Quick decode to check expiry (no network needed)
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    if (payload.exp && Math.floor(Date.now() / 1000) < payload.exp) {
-      window.location.replace('../dashboard/dash.html');
-    }
-  } catch {
-    localStorage.removeItem('authToken');
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  if (isLoggedIn) {
+    window.location.replace('../dashboard/dash.html');
   }
 })();
 
@@ -134,21 +124,13 @@ async function handleLogin(event) {
   setButtonLoading(submitBtn, true, 'Login');
 
   try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    const data = {
+      success: true,
+      accessToken: 'mock_access_token',
+      refreshToken: 'mock_refresh_token',
+      user: { firstName: email.split('@')[0] || 'User', email: email, role: 'user' }
+    };
 
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      showError(data.message || 'Login failed. Please check your credentials.');
-      setButtonLoading(submitBtn, false, 'Login');
-      return;
-    }
-
-    // Save tokens and user data
     saveAuthData(data);
     if (rememberMe) localStorage.setItem('rememberMe_email', email);
 
@@ -158,10 +140,9 @@ async function handleLogin(event) {
     setTimeout(() => {
       window.location.href = '../dashboard/dash.html';
     }, REDIRECT_DELAY);
-
   } catch (err) {
-    console.error('Login network error:', err);
-    showError('Cannot connect to server. Make sure backend is running on port 5000.');
+    showError('Login failed.');
+  } finally {
     setButtonLoading(submitBtn, false, 'Login');
   }
 }
@@ -191,20 +172,12 @@ async function handleRegister(event) {
   setButtonLoading(submitBtn, true, 'Create Account');
 
   try {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstName: first, lastName: last, email, phone, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      const msg = data.errors?.map(e => e.message).join(', ') || data.message || 'Registration failed.';
-      showError(msg);
-      setButtonLoading(submitBtn, false, 'Create Account');
-      return;
-    }
+    const data = {
+      success: true,
+      accessToken: 'mock_access_token',
+      refreshToken: 'mock_refresh_token',
+      user: { firstName: first, lastName: last, email: email, phone: phone, role: 'user' }
+    };
 
     saveAuthData(data);
 
@@ -214,10 +187,9 @@ async function handleRegister(event) {
     setTimeout(() => {
       window.location.href = '../dashboard/dash.html';
     }, REDIRECT_DELAY);
-
   } catch (err) {
-    console.error('Register network error:', err);
-    showError('Cannot connect to server. Make sure backend is running on port 5000.');
+    showError('Registration failed.');
+  } finally {
     setButtonLoading(submitBtn, false, 'Create Account');
   }
 }

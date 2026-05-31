@@ -1,11 +1,9 @@
 /**
- * signup.js — Login + Register + OTP with real backend API
- * Connects to: http://localhost:5000/api/auth
+ * signup.js — Login + Register + OTP (frontend-only mode)
  */
 'use strict';
 
 /* ─── Config ─────────────────────────────────────────────────── */
-const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'http://localhost:5000/api';
 const REDIRECT_DELAY = 1500;
 const byId = (id) => document.getElementById(id);
 
@@ -13,16 +11,9 @@ let pendingVerificationEmail = '';
 
 /* ─── Redirect if already logged in ─────────────────────────── */
 (function checkAlreadyLoggedIn() {
-  const token = localStorage.getItem('authToken');
-  if (!token) return;
-
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    if (payload.exp && Math.floor(Date.now() / 1000) < payload.exp) {
-      window.location.replace('../dashboard/dash.html');
-    }
-  } catch {
-    localStorage.removeItem('authToken');
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  if (isLoggedIn) {
+    window.location.replace('../dashboard/dash.html');
   }
 })();
 
@@ -154,26 +145,13 @@ async function handleLogin(event) {
   setButtonLoading(submitBtn, true, 'Login');
 
   try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    const data = {
+      success: true,
+      accessToken: 'mock_access_token',
+      refreshToken: 'mock_refresh_token',
+      user: { firstName: email.split('@')[0] || 'User', email: email, role: 'user' }
+    };
 
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      if (data.requireOtp) {
-        showSuccess('Please verify your email first.');
-        showOtpPanel(email);
-      } else {
-        showError(data.message || 'Login failed. Please check your credentials.');
-      }
-      setButtonLoading(submitBtn, false, 'Login');
-      return;
-    }
-
-    // Save tokens and user data
     saveAuthData(data);
     if (rememberMe) localStorage.setItem('rememberMe_email', email);
 
@@ -183,10 +161,9 @@ async function handleLogin(event) {
     setTimeout(() => {
       window.location.href = '../dashboard/dash.html';
     }, REDIRECT_DELAY);
-
   } catch (err) {
-    console.error('Login network error:', err);
-    showError('Cannot connect to server. Make sure backend is running on port 5000.');
+    showError('Login failed.');
+  } finally {
     setButtonLoading(submitBtn, false, 'Login');
   }
 }
@@ -216,34 +193,19 @@ async function handleRegister(event) {
   setButtonLoading(submitBtn, true, 'Create Account');
 
   try {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstName: first, lastName: last, email, phone, password }),
-    });
+    const data = {
+      success: true,
+      accessToken: 'mock_access_token',
+      refreshToken: 'mock_refresh_token',
+      user: { firstName: first, lastName: last, email: email, phone: phone, role: 'user' }
+    };
 
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      const msg = data.errors?.map(e => e.message).join(', ') || data.message || 'Registration failed.';
-      showError(msg);
-      setButtonLoading(submitBtn, false, 'Create Account');
-      return;
-    }
-
-    if (data.requireOtp) {
-      showSuccess('✅ Code sent! Check your email.');
-      showOtpPanel(data.email || email);
-    } else {
-      saveAuthData(data);
-      showSuccess(`🎉 Account created! Welcome! Redirecting...`);
-      setTimeout(() => { window.location.href = '../dashboard/dash.html'; }, REDIRECT_DELAY);
-    }
-    
+    saveAuthData(data);
+    showSuccess('🎉 Account created! Welcome! Redirecting...');
     event.target.reset();
+    setTimeout(() => { window.location.href = '../dashboard/dash.html'; }, REDIRECT_DELAY);
   } catch (err) {
-    console.error('Register network error:', err);
-    showError('Cannot connect to server. Make sure backend is running on port 5000.');
+    showError('Registration failed.');
   } finally {
     setButtonLoading(submitBtn, false, 'Create Account');
   }
@@ -294,29 +256,22 @@ async function handleVerifyOtp(event) {
   setButtonLoading(submitBtn, true, 'Verify & Proceed');
 
   try {
-    const res = await fetch(`${API_BASE}/auth/verify-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: pendingVerificationEmail, otp }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      showError(data.message || 'Verification failed. Please try again.');
-      setButtonLoading(submitBtn, false, 'Verify & Proceed');
-      return;
-    }
+    const data = {
+      success: true,
+      accessToken: 'mock_access_token',
+      refreshToken: 'mock_refresh_token',
+      user: { firstName: 'User', email: pendingVerificationEmail || 'user@gmail.com', role: 'user' }
+    };
 
     saveAuthData(data);
     showSuccess('🎉 Email verified successfully! Redirecting...');
-    
+
     setTimeout(() => {
       window.location.href = '../dashboard/dash.html';
     }, REDIRECT_DELAY);
-
   } catch (err) {
-    showError('Cannot connect to server.');
+    showError('Verification failed.');
+  } finally {
     setButtonLoading(submitBtn, false, 'Verify & Proceed');
   }
 }
@@ -330,20 +285,9 @@ async function handleResendOtp(event) {
   resendBtn.style.opacity = '0.5';
 
   try {
-    const res = await fetch(`${API_BASE}/auth/resend-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: pendingVerificationEmail }),
-    });
-
-    const data = await res.json();
-    if (res.ok && data.success) {
-      showSuccess('✅ New code sent to your email.');
-    } else {
-      showError(data.message || 'Failed to resend code.');
-    }
+    showSuccess('✅ New code sent to your email.');
   } catch (err) {
-    showError('Cannot connect to server.');
+    showError('Failed to resend code.');
   } finally {
     setTimeout(() => {
       resendBtn.style.pointerEvents = 'auto';
